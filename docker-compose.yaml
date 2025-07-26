@@ -1,0 +1,268 @@
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: airport-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: airportdb
+      MYSQL_USER: airportuser
+      MYSQL_PASSWORD: airportpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./airportdb.sql:/docker-entrypoint-initdb.d/airportdb.sql:ro
+    networks:
+      - airport-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Zipkin for distributed tracing
+  zipkin:
+    image: openzipkin/zipkin:2.24
+    container_name: airport-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - airport-network
+
+  # Eureka Server (Service Discovery)
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - airport-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "2021:2021"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    depends_on:
+      eureka-server:
+        condition: service_started
+    networks:
+      - airport-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2021/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Airport Pilot Service
+  airport-pilot-service:
+    build:
+      context: ./airport-pilot-service
+      dockerfile: Dockerfile
+    container_name: airport-pilot-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/airportdb
+      - SPRING_DATASOURCE_USERNAME=airportuser
+      - SPRING_DATASOURCE_PASSWORD=airportpass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - airport-network
+
+  # Airport Flight Service
+  airport-flight-service:
+    build:
+      context: ./airport-flight-service
+      dockerfile: Dockerfile
+    container_name: airport-flight-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/airportdb
+      - SPRING_DATASOURCE_USERNAME=airportuser
+      - SPRING_DATASOURCE_PASSWORD=airportpass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      airport-pilot-service:
+        condition: service_started
+    networks:
+      - airport-network
+
+  # Airport Booking Service
+  airport-bookings-service:
+    build:
+      context: ./airport-bookings-service
+      dockerfile: Dockerfile
+    container_name: airport-bookings-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/airportdb
+      - SPRING_DATASOURCE_USERNAME=airportuser
+      - SPRING_DATASOURCE_PASSWORD=airportpass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=${GMAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${GMAIL_PASSWORD}
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      airport-flight-service:
+        condition: service_started
+    networks:
+      - airport-network
+
+  # Airport Security Service
+  airport-security-service:
+    build:
+      context: ./airport-security-service
+      dockerfile: Dockerfile
+    container_name: airport-security-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/airportdb
+      - SPRING_DATASOURCE_USERNAME=airportuser
+      - SPRING_DATASOURCE_PASSWORD=airportpass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - airport-network
+
+  # Airport Check-in Service
+  airport-checkin-service:
+    build:
+      context: ./airport-checkin-service
+      dockerfile: Dockerfile
+    container_name: airport-checkin-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/airportdb
+      - SPRING_DATASOURCE_USERNAME=airportuser
+      - SPRING_DATASOURCE_PASSWORD=airportpass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - airport-network
+
+  # Airport Boarding Service
+  airport-boarding-service:
+    build:
+      context: ./airport-boarding-service
+      dockerfile: Dockerfile
+    container_name: airport-boarding-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/airportdb
+      - SPRING_DATASOURCE_USERNAME=airportuser
+      - SPRING_DATASOURCE_PASSWORD=airportpass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      airport-bookings-service:
+        condition: service_started
+      airport-checkin-service:
+        condition: service_started
+      airport-security-service:
+        condition: service_started
+    networks:
+      - airport-network
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:v2.40.0
+    container_name: airport-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - airport-network
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:9.2.0
+    container_name: airport-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - airport-network
+
+networks:
+  airport-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  prometheus_data:
+  grafana_data:

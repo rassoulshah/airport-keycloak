@@ -1,0 +1,36 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+# - "first_rules.yml"
+# - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+
+  # Eureka Server
+  - job_name: 'eureka-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'eureka-server:8761' ]
+
+  # API Gateway
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'api-gateway:2021' ]
+
+  - job_name: "airport-actuator-prometheus"
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'airport-boarding-service:8086', 'airport-checkin-service:8085', 'airport-security-service:8084', 'airport-bookings-service:8083', 'airport-flight-service:8082', 'airport-pilot-service:8081']
+
+  # MySQL Exporter (optional - requires separate mysql-exporter container)
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
