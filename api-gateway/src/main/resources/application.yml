@@ -6,7 +6,7 @@
 
 server:
   # PORT OF API-GATEWAY
-  port: '2021'
+  port: 2021
 
 spring:
   application:
@@ -20,9 +20,132 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: 'true'
+          # DISABLE AUTO DISCOVERY TO USE CUSTOM ROUTES
+          enabled: false
           # MICROSERVICE NAMES IN EUREKA SERVER WILL BE HANDLED IN LOWERCASE
-          lower-case-service-id: 'true'
+          lower-case-service-id: true
+      # DEFINE CUSTOM ROUTES WITH METHOD FILTERING
+      routes:
+        # Airport Pilot Service - Only GET methods allowed
+        - id: airport-pilot-service-get
+          uri: lb://airport-pilot-service
+          predicates:
+            - Path=/airport-pilot-service/**
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # Airport Pilot Service - Block non-GET methods
+        - id: airport-pilot-service-block
+          uri: no://op
+          predicates:
+            - Path=/airport-pilot-service/**
+            - Method=POST,PUT,DELETE,PATCH
+          filters:
+            - name: SetStatus
+              args:
+                status: 405
+
+        # Airport Flight Service - Only GET methods allowed
+        - id: airport-flight-service-get
+          uri: lb://airport-flight-service
+          predicates:
+            - Path=/airport-flight-service/**
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # Airport Flight Service - Block non-GET methods
+        - id: airport-flight-service-block
+          uri: no://op
+          predicates:
+            - Path=/airport-flight-service/**
+            - Method=POST,PUT,DELETE,PATCH
+          filters:
+            - name: SetStatus
+              args:
+                status: 405
+
+        # Airport Bookings Service - Only GET methods allowed
+        - id: airport-bookings-service-get
+          uri: lb://airport-bookings-service
+          predicates:
+            - Path=/airport-bookings-service/**
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # Airport Bookings Service - Block non-GET methods
+        - id: airport-bookings-service-block
+          uri: no://op
+          predicates:
+            - Path=/airport-bookings-service/**
+            - Method=POST,PUT,DELETE,PATCH
+          filters:
+            - name: SetStatus
+              args:
+                status: 405
+
+        # Airport Security Service - Only GET methods allowed
+        - id: airport-security-service-get
+          uri: lb://airport-security-service
+          predicates:
+            - Path=/airport-security-service/**
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # Airport Security Service - Block non-GET methods
+        - id: airport-security-service-block
+          uri: no://op
+          predicates:
+            - Path=/airport-security-service/**
+            - Method=POST,PUT,DELETE,PATCH
+          filters:
+            - name: SetStatus
+              args:
+                status: 405
+
+        # Airport Check-in Service - Only GET methods allowed
+        - id: airport-checkin-service-get
+          uri: lb://airport-checkin-service
+          predicates:
+            - Path=/airport-checkin-service/**
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # Airport Check-in Service - Block non-GET methods
+        - id: airport-checkin-service-block
+          uri: no://op
+          predicates:
+            - Path=/airport-checkin-service/**
+            - Method=POST,PUT,DELETE,PATCH
+          filters:
+            - name: SetStatus
+              args:
+                status: 405
+
+        # Airport Boarding Service - Only GET methods allowed
+        - id: airport-boarding-service-get
+          uri: lb://airport-boarding-service
+          predicates:
+            - Path=/airport-boarding-service/**
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # Airport Boarding Service - Block non-GET methods
+        - id: airport-boarding-service-block
+          uri: no://op
+          predicates:
+            - Path=/airport-boarding-service/**
+            - Method=POST,PUT,DELETE,PATCH
+          filters:
+            - name: SetStatus
+              args:
+                status: 405
+
   # SLEUTH PROPERTY
   sleuth:
     reactor:
@@ -47,7 +170,40 @@ management:
       exposure:
         # EXPOSE ALL THE ACTUATOR WEB ENDPOINTS IF SECURITY IS NOT YOUR CONCERN!
         include: "*"
-  # GET DETAIL INFORMATION OF ACTUATOR HEALTH ENDPOINT 
-  endpoint:    
+  # GET DETAIL INFORMATION OF ACTUATOR HEALTH ENDPOINT
+  endpoint:
     health:
       show-details: always
+  # ENABLE PROMETHEUS METRICS
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: 50ms,100ms,200ms,400ms
+
+# DEBUG LOGGING
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG
+
+# IP ACCESS CONTROL CONFIGURATION
+gateway:
+  security:
+    # Enable or disable IP filtering
+    ip-filter-enabled: true
+
+    # ALLOWED IPs (comma-separated) - if empty, all IPs are allowed (except blocked ones)
+    # Supports: exact IPs, CIDR notation, wildcards
+    # Examples: 192.168.1.100,10.0.0.0/8,172.16.*.*
+    allowed-ips: "127.0.0.1,192.168.1.0/24,10.0.0.*"
+
+    # BLOCKED IPs (comma-separated) - these IPs will be blocked regardless of allowlist
+    # Examples: 192.168.1.50,10.0.0.100,172.16.1.0/24
+    blocked-ips: "192.168.1.50,10.0.0.100"
