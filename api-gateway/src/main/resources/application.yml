@@ -202,7 +202,7 @@ gateway:
     # ALLOWED IPs (comma-separated) - if empty, all IPs are allowed (except blocked ones)
     # Supports: exact IPs, CIDR notation, wildcards
     # Examples: 192.168.1.100,10.0.0.0/8,172.16.*.*
-    allowed-ips: "127.0.0.1,192.168.1.0/24,10.0.0.*"
+    allowed-ips: "*"
 
     # BLOCKED IPs (comma-separated) - these IPs will be blocked regardless of allowlist
     # Examples: 192.168.1.50,10.0.0.100,172.16.1.0/24
