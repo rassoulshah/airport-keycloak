@@ -1,4 +1,10 @@
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/airport-realm
+          jwk-set-uri: http://keycloak:8080/realms/airport-realm/protocol/openid-connect/certs
   application:
     # UNIQUE NAME OF THIS MICROSERVICE
     name: airport-security-service

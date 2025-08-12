@@ -24,8 +24,26 @@ spring:
           enabled: false
           # MICROSERVICE NAMES IN EUREKA SERVER WILL BE HANDLED IN LOWERCASE
           lower-case-service-id: true
+      
+      # CORS Configuration
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+
       # DEFINE CUSTOM ROUTES WITH METHOD FILTERING
       routes:
+        # Authentication Service - No JWT required (public endpoints)
+        - id: airport-auth-service
+          uri: lb://airport-auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=0
+
         # Airport Pilot Service - Only GET methods allowed
         - id: airport-pilot-service-get
           uri: lb://airport-pilot-service
@@ -34,6 +52,7 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - name: JwtAuthenticationFilter
 
         # Airport Pilot Service - Block non-GET methods
         - id: airport-pilot-service-block
@@ -54,6 +73,7 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - name: JwtAuthenticationFilter
 
         # Airport Flight Service - Block non-GET methods
         - id: airport-flight-service-block
@@ -74,6 +94,7 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - name: JwtAuthenticationFilter
 
         # Airport Bookings Service - Block non-GET methods
         - id: airport-bookings-service-block
@@ -94,6 +115,7 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - name: JwtAuthenticationFilter
 
         # Airport Security Service - Block non-GET methods
         - id: airport-security-service-block
@@ -114,6 +136,7 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - name: JwtAuthenticationFilter
 
         # Airport Check-in Service - Block non-GET methods
         - id: airport-checkin-service-block
@@ -134,6 +157,7 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - name: JwtAuthenticationFilter
 
         # Airport Boarding Service - Block non-GET methods
         - id: airport-boarding-service-block
@@ -154,7 +178,7 @@ spring:
 # EUREKA SERVER URL
 eureka:
   client:
-    service-url:  # Changed from 'service.url' to 'service-url'
+    service-url:
       defaultZone: 'http://eureka-server:8761/eureka'
     register-with-eureka: true
     fetch-registry: true
@@ -207,3 +231,16 @@ gateway:
     # BLOCKED IPs (comma-separated) - these IPs will be blocked regardless of allowlist
     # Examples: 192.168.1.50,10.0.0.100,172.16.1.0/24
     blocked-ips: "192.168.1.50,10.0.0.100"
+
+# JWT Configuration - Read from environment variables
+jwt:
+  secret: ${JWT_SECRET:your-default-secret-key-here}
+  issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/airport-realm}
+
+# Keycloak Configuration - Read from environment variables  
+keycloak:
+  realm: ${KEYCLOAK_REALM:airport-realm}
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://keycloak:8080}
+  resource: ${KEYCLOAK_CLIENT_ID:airport-service}
+  credentials:
+    secret: ${KEYCLOAK_CLIENT_SECRET:your-client-secret-here}

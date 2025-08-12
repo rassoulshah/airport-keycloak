@@ -1,0 +1,64 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: airport-auth-service
+  
+  profiles:
+    active: default
+
+  sleuth:
+    zipkin:
+      base-url: http://zipkin:9411
+    sampler:
+      probability: 1.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
+eureka:
+  client:
+    service-url:
+      default-zone: http://eureka-server:8761/eureka
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+
+# Keycloak Configuration
+keycloak:
+  realm: ${KEYCLOAK_REALM:airport-realm}
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://keycloak:8080}
+  resource: ${KEYCLOAK_CLIENT_ID:airport-service}
+  credentials:
+    secret: ${KEYCLOAK_CLIENT_SECRET:your-client-secret-here}
+
+---
+# Docker profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  sleuth:
+    zipkin:
+      base-url: http://zipkin:9411
+    sampler:
+      probability: 1.0
+      
+eureka:
+  client:
+    service-url:
+      default-zone: http://eureka-server:8761/eureka
+  instance:
+    prefer-ip-address: true
+    hostname: airport-auth-service
