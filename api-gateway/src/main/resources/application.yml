@@ -9,6 +9,12 @@ server:
   port: 2021
 
 spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Keycloak realm certs (JWKS) - used to validate incoming tokens
+          jwk-set-uri: http://keycloak:8080/realms/airport-realm/protocol/openid-connect/certs
   application:
     # UNIQUE NAME OF API-GATEWAY
     name: api-gateway
