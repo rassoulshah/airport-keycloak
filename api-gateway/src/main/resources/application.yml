@@ -32,6 +32,12 @@ spring:
           lower-case-service-id: true
       # DEFINE CUSTOM ROUTES WITH METHOD FILTERING
       routes:
+        - id: airport-auth-service
+          uri: lb://airport-auth-service
+          predicates:
+            - Path=/airport-auth-service/**
+          filters:
+            - StripPrefix=1
         # Airport Pilot Service - Only GET methods allowed
         - id: airport-pilot-service-get
           uri: lb://airport-pilot-service

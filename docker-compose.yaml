@@ -68,6 +68,34 @@ services:
       start_period: 60s
 
   # Airport Pilot Service
+  airport-auth-service:
+    build:
+      context: ./airport-auth-service
+      dockerfile: Dockerfile
+    container_name: airport-auth-service
+    ports:
+      - "8087:8087"  # Map container 8086 to host 8087 to avoid collision
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/airportdb
+      - SPRING_DATASOURCE_USERNAME=airportuser
+      - SPRING_DATASOURCE_PASSWORD=airportpass
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_ZIPKIN_BASE_URL=http://zipkin:9411
+      # Keycloak connection
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=airport-realm
+      - KEYCLOAK_CLIENT_ID=airport-service
+      - KEYCLOAK_CLIENT_SECRET=w8Sria7R6m1BCqjOaPOww8VMoEqCDTNm
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    networks:
+      - airport-network
   airport-pilot-service:
     build:
       context: ./airport-pilot-service
