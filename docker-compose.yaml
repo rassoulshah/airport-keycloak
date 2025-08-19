@@ -74,7 +74,7 @@ services:
       dockerfile: Dockerfile
     container_name: airport-auth-service
     ports:
-      - "8087:8087"  # Map container 8086 to host 8087 to avoid collision
+      - "8087:8087"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/airportdb

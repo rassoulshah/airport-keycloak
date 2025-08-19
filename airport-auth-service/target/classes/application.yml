@@ -15,10 +15,11 @@ server:
 
 eureka:
   client:
-    service-url:  # Changed from 'service.url' to 'service-url'
-      defaultZone: 'http://eureka-server:8761/eureka'
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
     register-with-eureka: true
     fetch-registry: true
+    enabled: true  # Explicitly enable Eureka client
   instance:
     prefer-ip-address: true
     hostname: airport-auth-service
@@ -45,3 +46,9 @@ management:
   endpoint:
     health:
       show-details: always
+
+app:
+  cors:
+    allowed-origins:
+      - "http://localhost:3001"
+      - "http://localhost:8080"

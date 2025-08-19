@@ -13,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@CrossOrigin(origins = "${app.allowed-origins[0]}", allowCredentials = "true") // adjust as needed
 public class AuthController {
 
     private final KeycloakService keycloakService;

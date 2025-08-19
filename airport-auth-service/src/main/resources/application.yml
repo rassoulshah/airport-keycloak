@@ -1,0 +1,54 @@
+spring:
+  application:
+    # UNIQUE NAME OF THIS MICROSERVICE
+    name: airport-auth-service
+  # ANSI CONSOLE OUTPUT (COLOR LOGS WILL BE DISPLAYED)
+  output:
+    ansi:
+      enabled: ALWAYS
+  # ZIPKIN SERVER URL
+  zipkin:
+    base-url: 'http://zipkin:9411'
+
+server:
+  port: 8087
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
+    register-with-eureka: true
+    fetch-registry: true
+    enabled: true  # Explicitly enable Eureka client
+  instance:
+    prefer-ip-address: true
+    hostname: airport-auth-service
+    instance-id: ${spring.application.name}:${server.port}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+keycloak:
+  url: http://localhost:8080
+  realm: airport-realm
+  client:
+    id: ${KEYCLOAK_CLIENT_ID}
+    secret: ${KEYCLOAK_CLIENT_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # EXPOSE ALL THE ACTUATOR WEB ENDPOINTS IF SECURITY IS NOT YOUR CONCERN!
+        include: "*"
+  # GET DETAIL INFORMATION OF ACTUATOR HEALTH ENDPOINT
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  cors:
+    allowed-origins:
+      - "http://localhost:3001"
+      - "http://localhost:8080"
