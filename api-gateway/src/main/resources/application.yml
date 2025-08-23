@@ -1,37 +1,29 @@
-########## N O T E ########## 
-# Spring Cloud API Gateway does load balancing for a microservice instances automatically
-# It means we don't need to use implement Spring Cloud Load Balancer if we use Spring Cloud API Gateway
-# You can test this scenario by running airport-pilot-service two times (on two ports 8081 and 9081) and check how the load balancing happening for requests on round robbin passion */
-# Spring Cloud Load Balancer is a replacement of Ribbon. (Spring Cloud Netflix Ribbon has been deprecated).
-
 server:
-  # PORT OF API-GATEWAY
   port: 2021
 
 spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          # Keycloak realm certs (JWKS) - used to validate incoming tokens
-          jwk-set-uri: http://keycloak:8080/realms/airport-realm/protocol/openid-connect/certs
   application:
-    # UNIQUE NAME OF API-GATEWAY
     name: api-gateway
-  # ANSI CONSOLE OUTPUT (COLOR LOGS WILL BE DISPLAYED)
   output:
     ansi:
       enabled: ALWAYS
   cloud:
     gateway:
+      # default-filters:
+      #   - JwtAuthFilter
       discovery:
         locator:
-          # DISABLE AUTO DISCOVERY TO USE CUSTOM ROUTES
           enabled: false
-          # MICROSERVICE NAMES IN EUREKA SERVER WILL BE HANDLED IN LOWERCASE
           lower-case-service-id: true
-      # DEFINE CUSTOM ROUTES WITH METHOD FILTERING
       routes:
+        # Auth routes - NO JWT filter applied
+        - id: auth
+          uri: http://localhost:8087
+          predicates:
+            - Path=/auth/**
+          filters:
+            - StripPrefix=0
+
         - id: airport-auth-service
           uri: lb://airport-auth-service
           predicates:
@@ -39,7 +31,7 @@ spring:
           filters:
             - StripPrefix=1
 
-        # Airport Pilot Service - Only GET methods allowed
+        # Protected routes - JWT filter applied individually
         - id: airport-pilot-service-get
           uri: lb://airport-pilot-service
           predicates:
@@ -47,8 +39,8 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - JwtAuthFilter  # Apply JWT filter only to protected routes
 
-        # Airport Pilot Service - Block non-GET methods
         - id: airport-pilot-service-block
           uri: no://op
           predicates:
@@ -59,7 +51,6 @@ spring:
               args:
                 status: 405
 
-        # Airport Flight Service - Only GET methods allowed
         - id: airport-flight-service-get
           uri: lb://airport-flight-service
           predicates:
@@ -67,8 +58,8 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - JwtAuthFilter
 
-        # Airport Flight Service - Block non-GET methods
         - id: airport-flight-service-block
           uri: no://op
           predicates:
@@ -79,7 +70,6 @@ spring:
               args:
                 status: 405
 
-        # Airport Bookings Service - Only GET methods allowed
         - id: airport-bookings-service-get
           uri: lb://airport-bookings-service
           predicates:
@@ -87,8 +77,8 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - JwtAuthFilter
 
-        # Airport Bookings Service - Block non-GET methods
         - id: airport-bookings-service-block
           uri: no://op
           predicates:
@@ -99,7 +89,6 @@ spring:
               args:
                 status: 405
 
-        # Airport Security Service - Only GET methods allowed
         - id: airport-security-service-get
           uri: lb://airport-security-service
           predicates:
@@ -107,8 +96,8 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - JwtAuthFilter
 
-        # Airport Security Service - Block non-GET methods
         - id: airport-security-service-block
           uri: no://op
           predicates:
@@ -119,7 +108,6 @@ spring:
               args:
                 status: 405
 
-        # Airport Check-in Service - Only GET methods allowed
         - id: airport-checkin-service-get
           uri: lb://airport-checkin-service
           predicates:
@@ -127,8 +115,8 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - JwtAuthFilter
 
-        # Airport Check-in Service - Block non-GET methods
         - id: airport-checkin-service-block
           uri: no://op
           predicates:
@@ -139,7 +127,6 @@ spring:
               args:
                 status: 405
 
-        # Airport Boarding Service - Only GET methods allowed
         - id: airport-boarding-service-get
           uri: lb://airport-boarding-service
           predicates:
@@ -147,8 +134,8 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+            - JwtAuthFilter
 
-        # Airport Boarding Service - Block non-GET methods
         - id: airport-boarding-service-block
           uri: no://op
           predicates:
@@ -159,15 +146,13 @@ spring:
               args:
                 status: 405
 
-  # SLEUTH PROPERTY
   sleuth:
     reactor:
       instrumentation-type: decorate-on-each
 
-# EUREKA SERVER URL
 eureka:
   client:
-    service-url:  # Changed from 'service.url' to 'service-url'
+    service-url:
       defaultZone: 'http://eureka-server:8761/eureka'
     register-with-eureka: true
     fetch-registry: true
@@ -176,18 +161,14 @@ eureka:
     hostname: api-gateway
     instance-id: ${spring.application.name}:${server.port}
 
-# ACTUATOR WEB ENDPOINTS EXPOSURE
 management:
   endpoints:
     web:
       exposure:
-        # EXPOSE ALL THE ACTUATOR WEB ENDPOINTS IF SECURITY IS NOT YOUR CONCERN!
         include: "*"
-  # GET DETAIL INFORMATION OF ACTUATOR HEALTH ENDPOINT
   endpoint:
     health:
       show-details: always
-  # ENABLE PROMETHEUS METRICS
   metrics:
     export:
       prometheus:
@@ -198,7 +179,6 @@ management:
       sla:
         http.server.requests: 50ms,100ms,200ms,400ms
 
-# DEBUG LOGGING
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
@@ -206,17 +186,13 @@ logging:
     com.netflix.eureka: DEBUG
     com.netflix.discovery: DEBUG
 
-# IP ACCESS CONTROL CONFIGURATION
 gateway:
   security:
-    # Enable or disable IP filtering
     ip-filter-enabled: true
-
-    # ALLOWED IPs (comma-separated) - if empty, all IPs are allowed (except blocked ones)
-    # Supports: exact IPs, CIDR notation, wildcards
-    # Examples: 192.168.1.100,10.0.0.0/8,172.16.*.*
     allowed-ips: "*"
-
-    # BLOCKED IPs (comma-separated) - these IPs will be blocked regardless of allowlist
-    # Examples: 192.168.1.50,10.0.0.100,172.16.1.0/24
     blocked-ips: "192.168.1.50,10.0.0.100"
+
+app:
+  jwt:
+    secret: 19436925818d0bc4151f09eeedafebaeaabc1e8cc93f98afce5205973be8d283658a2311461af2cf9cd8f7c0d2bcfd1ed64905427533d247de27b9e65efac00b
+    issuer: airport-auth

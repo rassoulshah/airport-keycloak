@@ -10,6 +10,17 @@ spring:
   zipkin:
     base-url: 'http://zipkin:9411'
 
+  datasource:
+    url: 'jdbc:mysql://mysql:3306/airportdb'
+    username: airportuser
+    password: airportpass
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    
+
 server:
   port: 8087
 
@@ -48,7 +59,9 @@ management:
       show-details: always
 
 app:
-  cors:
-    allowed-origins:
-      - "http://localhost:3001"
-      - "http://localhost:8080"
+  jwt:
+    issuer: airport-auth
+    # 256-bit (32+ chars) base secret for HS256; replace in production via env var
+    secret: 19436925818d0bc4151f09eeedafebaeaabc1e8cc93f98afce5205973be8d283658a2311461af2cf9cd8f7c0d2bcfd1ed64905427533d247de27b9e65efac00b
+    accessTokenTtlMinutes: 60
+    refreshTokenTtlDays: 7
