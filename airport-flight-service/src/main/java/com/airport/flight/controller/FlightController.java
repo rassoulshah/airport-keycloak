@@ -9,7 +9,10 @@
 package com.airport.flight.controller;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.airport.flight.request.Flight;
 import com.airport.flight.response.FlightResponse;
+import com.airport.flight.response.PilotResponse;
 import com.airport.flight.service.FlightService;
 
 @RestController
@@ -48,6 +52,11 @@ public class FlightController {
 		return new ResponseEntity<>(flightResponse, HttpStatus.CREATED);
 	}
 
+	@GetMapping("/api/v1/flights")
+	public ResponseEntity<List<FlightResponse>> getAllFlights() {
+		List<FlightResponse> listFlightResponse = flightService.getAllFlights();
+		return new ResponseEntity<>(listFlightResponse, HttpStatus.OK);
+	}
 	/*
 	 * A GET API to retrieve an existing flight
 	 * 

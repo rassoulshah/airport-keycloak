@@ -86,7 +86,7 @@ services:
       - KEYCLOAK_URL=http://keycloak:8080
       - KEYCLOAK_REALM=airport-realm
       - KEYCLOAK_CLIENT_ID=airport-service
-      - KEYCLOAK_CLIENT_SECRET=w8Sria7R6m1BCqjOaPOww8VMoEqCDTNm
+      - KEYCLOAK_CLIENT_SECRET=COllyNVFFzVI1G4dVNoXUAAYrB4S6GZO
     depends_on:
       mysql:
         condition: service_healthy

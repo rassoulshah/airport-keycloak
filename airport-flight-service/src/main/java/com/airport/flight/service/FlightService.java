@@ -8,12 +8,16 @@
 
 package com.airport.flight.service;
 
+import java.util.List;
+
 import com.airport.flight.request.Flight;
 import com.airport.flight.response.FlightResponse;
 
 public interface FlightService {
 
 	public FlightResponse createFlight(Flight flight);
+
+	public List<FlightResponse> getAllFlights();
 
 	public FlightResponse getFlightById(long id);
 

@@ -32,132 +32,82 @@ spring:
           lower-case-service-id: true
       # DEFINE CUSTOM ROUTES WITH METHOD FILTERING
       routes:
-        - id: airport-auth-service
-          uri: lb://airport-auth-service
-          predicates:
-            - Path=/airport-auth-service/**
-          filters:
-            - StripPrefix=1
-
-        # Airport Pilot Service - Only GET methods allowed
-        - id: airport-pilot-service-get
+        # Pilot Service Routes
+        - id: airport-pilot-service
           uri: lb://airport-pilot-service
           predicates:
             - Path=/airport-pilot-service/**
-            - Method=GET
           filters:
             - StripPrefix=1
-
-        # Airport Pilot Service - Block non-GET methods
-        - id: airport-pilot-service-block
-          uri: no://op
-          predicates:
-            - Path=/airport-pilot-service/**
-            - Method=POST,PUT,DELETE,PATCH
-          filters:
-            - name: SetStatus
+            - name: JwtAuthorization
               args:
-                status: 405
+                enabled: true
+                protectedServicesForGet: 
+                  - pilot
+                  - checkin 
+                  - security
 
-        # Airport Flight Service - Only GET methods allowed
-        - id: airport-flight-service-get
+        # Flight Service Routes  
+        - id: airport-flight-service
           uri: lb://airport-flight-service
           predicates:
             - Path=/airport-flight-service/**
-            - Method=GET
           filters:
             - StripPrefix=1
-
-        # Airport Flight Service - Block non-GET methods
-        - id: airport-flight-service-block
-          uri: no://op
-          predicates:
-            - Path=/airport-flight-service/**
-            - Method=POST,PUT,DELETE,PATCH
-          filters:
-            - name: SetStatus
+            - name: JwtAuthorization
               args:
-                status: 405
+                enabled: true
+                protectedServicesForGet: []
 
-        # Airport Bookings Service - Only GET methods allowed
-        - id: airport-bookings-service-get
-          uri: lb://airport-bookings-service
+        # Booking Service Routes
+        - id: airport-booking-service
+          uri: lb://airport-booking-service
           predicates:
-            - Path=/airport-bookings-service/**
-            - Method=GET
+            - Path=/airport-booking-service/**
           filters:
             - StripPrefix=1
-
-        # Airport Bookings Service - Block non-GET methods
-        - id: airport-bookings-service-block
-          uri: no://op
-          predicates:
-            - Path=/airport-bookings-service/**
-            - Method=POST,PUT,DELETE,PATCH
-          filters:
-            - name: SetStatus
+            - name: JwtAuthorization
               args:
-                status: 405
+                enabled: true
+                protectedServicesForGet: []
 
-        # Airport Security Service - Only GET methods allowed
-        - id: airport-security-service-get
+        # Security Service Routes
+        - id: airport-security-service
           uri: lb://airport-security-service
           predicates:
             - Path=/airport-security-service/**
-            - Method=GET
           filters:
             - StripPrefix=1
-
-        # Airport Security Service - Block non-GET methods
-        - id: airport-security-service-block
-          uri: no://op
-          predicates:
-            - Path=/airport-security-service/**
-            - Method=POST,PUT,DELETE,PATCH
-          filters:
-            - name: SetStatus
+            - name: JwtAuthorization
               args:
-                status: 405
+                enabled: true
+                protectedServicesForGet: 
+                  - security
 
-        # Airport Check-in Service - Only GET methods allowed
-        - id: airport-checkin-service-get
+        # Check-in Service Routes
+        - id: airport-checkin-service
           uri: lb://airport-checkin-service
           predicates:
             - Path=/airport-checkin-service/**
-            - Method=GET
           filters:
             - StripPrefix=1
-
-        # Airport Check-in Service - Block non-GET methods
-        - id: airport-checkin-service-block
-          uri: no://op
-          predicates:
-            - Path=/airport-checkin-service/**
-            - Method=POST,PUT,DELETE,PATCH
-          filters:
-            - name: SetStatus
+            - name: JwtAuthorization
               args:
-                status: 405
+                enabled: true
+                protectedServicesForGet: 
+                  - checkin
 
-        # Airport Boarding Service - Only GET methods allowed
-        - id: airport-boarding-service-get
+        # Boarding Service Routes
+        - id: airport-boarding-service
           uri: lb://airport-boarding-service
           predicates:
             - Path=/airport-boarding-service/**
-            - Method=GET
           filters:
             - StripPrefix=1
-
-        # Airport Boarding Service - Block non-GET methods
-        - id: airport-boarding-service-block
-          uri: no://op
-          predicates:
-            - Path=/airport-boarding-service/**
-            - Method=POST,PUT,DELETE,PATCH
-          filters:
-            - name: SetStatus
+            - name: JwtAuthorization
               args:
-                status: 405
+                enabled: true
+                protectedServicesForGet: []
 
   # SLEUTH PROPERTY
   sleuth:

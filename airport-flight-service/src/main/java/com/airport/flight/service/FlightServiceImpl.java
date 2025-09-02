@@ -8,6 +8,8 @@
 
 package com.airport.flight.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
@@ -84,6 +86,26 @@ public class FlightServiceImpl implements FlightService {
 		flightResponse.setPilotResponse(pilotServiceCircuitBreaker.getPilotById(flightEntity.getPilotId())); //NOSONAR
 
 		return flightResponse;
+	}
+
+	@Override
+	public List<FlightResponse> getAllFlights() {
+
+		log.info("retrieving all existing flights");
+
+		List<FlightEntity> listFlightEntity = flightRepository.findAll();
+
+		List<FlightResponse> listFlightResponse = new ArrayList<>();
+
+		for (FlightEntity flightEntity : listFlightEntity) {
+			FlightResponse flightResponse = new FlightResponse(flightEntity);
+			flightResponse.setPilotResponse(pilotServiceCircuitBreaker.getPilotById(flightEntity.getPilotId()));
+			listFlightResponse.add(flightResponse);
+		}
+
+		log.info("retrieved all existing flights");
+
+		return listFlightResponse;
 	}
 
 	@Override

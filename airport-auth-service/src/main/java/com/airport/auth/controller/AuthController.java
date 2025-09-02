@@ -2,7 +2,6 @@ package com.airport.auth.controller;
 
 import com.airport.auth.dto.RegisterRequest;
 import com.airport.auth.service.KeycloakService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
