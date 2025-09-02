@@ -8,6 +8,8 @@
 
 package com.airport.bookings.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
@@ -99,5 +101,22 @@ public class BookingServiceImpl implements BookingService {
 		bookingResponse.setFlightResponse(flightFeignClient.getFlightById(bookingEntity.getFlightNumber()).getBody());
 
 		return bookingResponse;
+	}
+
+	@Override
+	public List<BookingResponse> getAllBookings() {
+
+		log.info("retrieving all existing Bookings");
+
+		List<BookingEntity> listBookingEntity = bookingRepository.findAll();
+
+		List<BookingResponse> listBookingResponse = new ArrayList<>();
+
+		for (BookingEntity bookingEntity : listBookingEntity)
+			listBookingResponse.add(new BookingResponse(bookingEntity));
+
+		log.info("retrieved all existing Bookings");
+
+		return listBookingResponse;
 	}
 }

@@ -8,6 +8,8 @@
 
 package com.airport.bookings.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +41,12 @@ public class BookingController {
 	public ResponseEntity<BookingResponse> createBooking(@RequestBody Booking booking) {
 		BookingResponse bookingResponse = bookingService.createBooking(booking);
 		return new ResponseEntity<>(bookingResponse, HttpStatus.CREATED);
+	}
+
+	@GetMapping("/api/v1/bookings")
+	public ResponseEntity<List<BookingResponse>> getAllBookings() {
+		List<BookingResponse> listBookingResponse = bookingService.getAllBookings();
+		return new ResponseEntity<>(listBookingResponse, HttpStatus.OK);
 	}
 
 	/*
