@@ -10,12 +10,12 @@ package com.airport.bookings.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.airport.bookings.email.BookingEmailService;
 import com.airport.bookings.entity.BookingEntity;
@@ -23,7 +23,10 @@ import com.airport.bookings.feignclients.FlightFeignClient;
 import com.airport.bookings.repository.BookingRepository;
 import com.airport.bookings.request.Booking;
 import com.airport.bookings.response.BookingResponse;
+import com.airport.bookings.response.FlightResponse;
 import com.airport.bookings.util.GeneratePNRNumber;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 //import javassist.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +69,8 @@ public class BookingServiceImpl implements BookingService {
 		bookingResponse.setFlightResponse(flightFeignClient.getFlightById(bookingEntity.getFlightNumber()).getBody());
 
 		/* email the booking information to the passenger */
-		// bookingEmailService.sendEmail(bookingResponse.getEmail(), "Flight Booking Confirmed", bookingResponse);
+		// bookingEmailService.sendEmail(bookingResponse.getEmail(), "Flight Booking
+		// Confirmed", bookingResponse);
 
 		return bookingResponse;
 	}
@@ -75,13 +79,9 @@ public class BookingServiceImpl implements BookingService {
 	public BookingResponse getBookingById(long id) {
 		log.info("starting getBookingByBookingId() service method");
 
-		Optional<BookingEntity> optionalBookingEntity = bookingRepository.findById(id);
-
-		if(optionalBookingEntity.isEmpty()) {
-			// throw new NotFoundException(null);
-		}
-		
-		BookingEntity bookingEntity = optionalBookingEntity.get();
+		BookingEntity bookingEntity = bookingRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(
+						HttpStatus.NOT_FOUND, "Booking with id " + id + " not found"));
 
 		BookingResponse bookingResponse = new BookingResponse(bookingEntity);
 
@@ -105,18 +105,59 @@ public class BookingServiceImpl implements BookingService {
 
 	@Override
 	public List<BookingResponse> getAllBookings() {
-
 		log.info("retrieving all existing Bookings");
 
 		List<BookingEntity> listBookingEntity = bookingRepository.findAll();
-
 		List<BookingResponse> listBookingResponse = new ArrayList<>();
 
-		for (BookingEntity bookingEntity : listBookingEntity)
-			listBookingResponse.add(new BookingResponse(bookingEntity));
+		for (BookingEntity bookingEntity : listBookingEntity) {
+			BookingResponse bookingResponse = new BookingResponse(bookingEntity);
 
-		log.info("retrieved all existing Bookings");
+			try {
+				// Cast the response body to FlightResponse
+				ResponseEntity<?> flightResponseEntity = flightFeignClient
+						.getFlightById(bookingEntity.getFlightNumber());
+				FlightResponse flightResponse = (FlightResponse) flightResponseEntity.getBody();
+				bookingResponse.setFlightResponse(flightResponse);
+			} catch (Exception e) {
+				log.error("Failed to fetch flight data for booking ID: {} with flight number: {}. Error: {}",
+						bookingEntity.getId(), bookingEntity.getFlightNumber(), e.getMessage());
+				bookingResponse.setFlightResponse(null);
+			}
 
+			listBookingResponse.add(bookingResponse);
+		}
+
+		log.info("retrieved all existing Bookings with flight data");
+		return listBookingResponse;
+	}
+
+	@Override
+	public List<BookingResponse> getBookingsByUserEmail(String email) {
+		log.info("retrieving bookings for user email: {}", email);
+
+		// Find bookings by user email
+		List<BookingEntity> listBookingEntity = bookingRepository.findByEmail(email);
+		List<BookingResponse> listBookingResponse = new ArrayList<>();
+
+		for (BookingEntity bookingEntity : listBookingEntity) {
+			BookingResponse bookingResponse = new BookingResponse(bookingEntity);
+
+			try {
+				// Get flight data for each booking
+				ResponseEntity<FlightResponse> flightResponseEntity = flightFeignClient
+						.getFlightById(bookingEntity.getFlightNumber());
+				bookingResponse.setFlightResponse(flightResponseEntity.getBody());
+			} catch (Exception e) {
+				log.error("Failed to fetch flight data for booking ID: {} with flight number: {}. Error: {}",
+						bookingEntity.getId(), bookingEntity.getFlightNumber(), e.getMessage());
+				bookingResponse.setFlightResponse(null);
+			}
+
+			listBookingResponse.add(bookingResponse);
+		}
+
+		log.info("retrieved {} bookings for user email: {}", listBookingResponse.size(), email);
 		return listBookingResponse;
 	}
 }

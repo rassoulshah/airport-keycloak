@@ -22,4 +22,6 @@ public interface BookingService {
 	BookingResponse findBookingByPNRNumber(String pnrNumber);
 
 	public List<BookingResponse> getAllBookings();
+	
+	List<BookingResponse> getBookingsByUserEmail(String email);
 }

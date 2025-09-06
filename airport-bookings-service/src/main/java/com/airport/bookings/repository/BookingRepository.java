@@ -13,10 +13,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.airport.bookings.entity.BookingEntity;
+import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
 	@Query("SELECT b FROM BookingEntity b WHERE b.pnrNumber = ?1")
 	BookingEntity findByPNRNumber(String pnrNumber);
+	
+	// Find bookings by email (using the existing email field)
+	List<BookingEntity> findByEmail(String email);
 }

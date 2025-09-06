@@ -60,10 +60,10 @@ spring:
                 protectedServicesForGet: []
 
         # Booking Service Routes
-        - id: airport-booking-service
-          uri: lb://airport-booking-service
+        - id: airport-bookings-service
+          uri: lb://airport-bookings-service
           predicates:
-            - Path=/airport-booking-service/**
+            - Path=/airport-bookings-service/**
           filters:
             - StripPrefix=1
             - name: JwtAuthorization
