@@ -8,6 +8,9 @@
 
 package com.airport.checkin.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -59,5 +62,22 @@ public class CheckinServiceImpl implements CheckinService {
 		log.info("fetching check-in by booking id " + bookingId);
 		CheckinEntity checkinEntity = checkinRepository.findByBookingId(bookingId).get();
 		return new CheckinResponse(checkinEntity);
+	}
+
+	@Override
+	public List<CheckinResponse> getAllCheckins() {
+
+		log.info("retrieving all existing Checkins");
+
+		List<CheckinEntity> listCheckinEntity = checkinRepository.findAll();
+
+		List<CheckinResponse> listCheckinResponse = new ArrayList<>();
+
+		for (CheckinEntity checkinEntity : listCheckinEntity)
+			listCheckinResponse.add(new CheckinResponse(checkinEntity));
+
+		log.info("retrieved all existing Checkins");
+
+		return listCheckinResponse;
 	}
 }

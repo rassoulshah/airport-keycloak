@@ -8,6 +8,8 @@
 
 package com.airport.checkin.service;
 
+import java.util.List;
+
 import com.airport.checkin.request.Checkin;
 import com.airport.checkin.response.CheckinResponse;
 
@@ -16,4 +18,5 @@ public interface CheckinService {
 	CheckinResponse createCheckin(Checkin checkin);
 	CheckinResponse getCheckinById(Long id);
 	CheckinResponse findCheckinByBookingId(Long bookingId);
+	public List<CheckinResponse> getAllCheckins();
 }

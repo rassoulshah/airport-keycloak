@@ -8,6 +8,8 @@
 
 package com.airport.security.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +41,13 @@ public class SecurityController {
 	public ResponseEntity<SecurityResponse> createSecurity(@RequestBody Security security) {
 		SecurityResponse securityResponse = securityService.createSecurity(security);
 		return new ResponseEntity<>(securityResponse, HttpStatus.CREATED);
+	}
+
+
+	@GetMapping("/api/v1/securities")
+	public ResponseEntity<List<SecurityResponse>> getAllSecurities() {
+		List<SecurityResponse> listSecurityResponse = securityService.getAllSecurities();
+		return new ResponseEntity<>(listSecurityResponse, HttpStatus.OK);
 	}
 
 	/*

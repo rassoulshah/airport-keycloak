@@ -8,6 +8,8 @@
 
 package com.airport.checkin.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +40,12 @@ public class CheckinController {
 	public ResponseEntity<CheckinResponse> createCheckin(@RequestBody Checkin checkin) {
 		CheckinResponse checkinResponse = checkinService.createCheckin(checkin);
 		return new ResponseEntity<>(checkinResponse, HttpStatus.CREATED);
+	}
+
+	@GetMapping("/api/v1/checkin")
+	public ResponseEntity<List<CheckinResponse>> getAllCheckins() {
+		List<CheckinResponse> listCheckinResponse = checkinService.getAllCheckins();
+		return new ResponseEntity<>(listCheckinResponse, HttpStatus.OK);
 	}
 
 	/*
