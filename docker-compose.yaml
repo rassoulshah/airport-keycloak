@@ -44,14 +44,13 @@ services:
     networks:
       - airport-network
 
-  # API Gateway
+  # API Gateway (Internal only - accessed through Nginx)
   api-gateway:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
     container_name: api-gateway
-    ports:
-      - "2021:2021"
+    # Remove external port mapping - only accessible through nginx
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
@@ -67,7 +66,7 @@ services:
       retries: 5
       start_period: 60s
 
-  # Airport Pilot Service
+  # Airport Auth Service
   airport-auth-service:
     build:
       context: ./airport-auth-service
@@ -96,6 +95,8 @@ services:
         condition: service_started
     networks:
       - airport-network
+ 
+  # Airport Pilot Service
   airport-pilot-service:
     build:
       context: ./airport-pilot-service
@@ -249,6 +250,48 @@ services:
     networks:
       - airport-network
 
+  # React Frontend
+  airport-frontend:
+    build:
+      context: ./airport-frontend
+      dockerfile: Dockerfile
+    container_name: airport-frontend
+    environment:
+      # FIXED: More specific API base URL for auth
+      - REACT_APP_API_BASE_URL=http://localhost
+      - REACT_APP_AUTH_BASE_URL=http://localhost/api/v1/auth
+      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
+      - REACT_APP_KEYCLOAK_REALM=airport-realm
+      - REACT_APP_KEYCLOAK_CLIENT_ID=airport-client
+    depends_on:
+      - api-gateway
+    networks:
+      - airport-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: airport-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - airport-frontend
+      - api-gateway
+      - keycloak
+      - grafana
+    networks:
+      - airport-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Keycloak Database
   keycloak-db:
     image: postgres:13
     container_name: keycloak-postgres
@@ -263,6 +306,7 @@ services:
     networks:
       - airport-network
 
+  # Keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:23.0.0
     container_name: keycloak
@@ -281,6 +325,7 @@ services:
     networks:
       - airport-network
     command: start-dev
+
   # Prometheus for monitoring
   prometheus:
     image: prom/prometheus:v2.40.0

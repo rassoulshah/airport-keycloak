@@ -30,8 +30,8 @@ springdoc:
     path: /swagger-ui.html
 
 keycloak:
-  url: http://localhost:8080
-  realm: airport-realm
+  url: ${KEYCLOAK_URL}
+  realm: ${KEYCLOAK_REALM}
   client:
     id: ${KEYCLOAK_CLIENT_ID}
     secret: ${KEYCLOAK_CLIENT_SECRET}
